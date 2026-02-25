@@ -33,6 +33,7 @@ format_percent_token() {
   local value="$1"
   local style="$2"
   local pct
+  local ring
 
   pct="$(format_percent "$value")"
   if [[ "$pct" == "--" ]]; then
@@ -40,7 +41,12 @@ format_percent_token() {
     return 0
   fi
 
-  if [[ "$style" == "ring" ]]; then
+  if [[ "$style" == "number" ]]; then
+    printf '%s%%' "$pct"
+    return 0
+  fi
+
+  if [[ "$style" == "ring" || "$style" == "ring_number" || "$style" == "number_ring" ]]; then
     local level
 
     if (( pct < 0 )); then
@@ -53,19 +59,35 @@ format_percent_token() {
     # 8-step Nerd Font ring (mdi circle-slice), rounded from percent.
     level=$(( (pct * 8 + 50) / 100 ))
     case "$level" in
-      0) printf '%s' "○" ;;
-      1) printf '%s' "󰪞" ;;
-      2) printf '%s' "󰪟" ;;
-      3) printf '%s' "󰪠" ;;
-      4) printf '%s' "󰪡" ;;
-      5) printf '%s' "󰪢" ;;
-      6) printf '%s' "󰪣" ;;
-      7) printf '%s' "󰪤" ;;
-      *) printf '%s' "󰪥" ;;
+      0) ring="○" ;;
+      1) ring="󰪞" ;;
+      2) ring="󰪟" ;;
+      3) ring="󰪠" ;;
+      4) ring="󰪡" ;;
+      5) ring="󰪢" ;;
+      6) ring="󰪣" ;;
+      7) ring="󰪤" ;;
+      *) ring="󰪥" ;;
     esac
   else
     printf '%s%%' "$pct"
+    return 0
   fi
+
+  case "$style" in
+    ring) printf '%s' "$ring" ;;
+    ring_number) printf '%s%s%%' "$ring" "$pct" ;;
+    number_ring) printf '%s%%%s' "$pct" "$ring" ;;
+    *) printf '%s%%' "$pct" ;;
+  esac
+}
+
+validate_percent_style() {
+  local style="$1"
+  case "$style" in
+    number|ring|ring_number|number_ring) printf '%s' "$style" ;;
+    *) printf '%s' "number" ;;
+  esac
 }
 
 parse_epoch_from_iso() {
@@ -137,6 +159,7 @@ main() {
   show_week="${CLAUDE_USAGE_SHOW_SEVEN_DAY:-$(get_tmux_option '@claude_usage_show_seven_day' 'on')}"
   show_reset="${CLAUDE_USAGE_SHOW_RESET:-$(get_tmux_option '@claude_usage_show_reset' 'on')}"
   percent_style="${CLAUDE_USAGE_PERCENT_STYLE:-$(get_tmux_option '@claude_usage_percent_style' 'number')}"
+  percent_style="$(validate_percent_style "$percent_style")"
   error_file="${cache_file}.error"
 
   trigger_refresh_if_needed "$cache_file" "$refresh_seconds"
@@ -150,10 +173,6 @@ main() {
   fetched_at_epoch="$(jq -r '.fetched_at_epoch // 0' "$cache_file" 2>/dev/null || printf '0')"
   five_hour_util="$(jq -r '.five_hour_utilization // empty' "$cache_file" 2>/dev/null || true)"
   seven_day_util="$(jq -r '.seven_day_utilization // empty' "$cache_file" 2>/dev/null || true)"
-
-  if [[ "$percent_style" != "ring" ]]; then
-    percent_style="number"
-  fi
 
   five_text="$(format_percent_token "$five_hour_util" "$percent_style")"
   seven_text="$(format_percent_token "$seven_day_util" "$percent_style")"
