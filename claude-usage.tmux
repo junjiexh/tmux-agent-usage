@@ -65,6 +65,7 @@ main() {
   set_option_if_unset "@claude_usage_cache_file" "$HOME/.cache/tmux-claude-usage/usage.json"
   set_option_if_unset "@claude_usage_show_seven_day" "on"
   set_option_if_unset "@claude_usage_show_reset" "on"
+  set_option_if_unset "@claude_usage_percent_style" "number"
   set_option_if_unset "@claude_usage_auto_append_right" "on"
   set_option_if_unset "@claude_usage_auto_expand_right_length" "on"
   set_option_if_unset "@claude_usage_min_right_length" "120"

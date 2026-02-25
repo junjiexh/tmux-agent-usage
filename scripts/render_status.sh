@@ -29,6 +29,41 @@ format_percent() {
   printf '%.0f' "$value"
 }
 
+format_percent_token() {
+  local value="$1"
+  local style="$2"
+  local pct
+
+  pct="$(format_percent "$value")"
+  if [[ "$pct" == "--" ]]; then
+    printf '%s' "--"
+    return 0
+  fi
+
+  if [[ "$style" == "ring" ]]; then
+    if (( pct < 0 )); then
+      pct=0
+    fi
+    if (( pct > 100 )); then
+      pct=100
+    fi
+
+    if (( pct < 13 )); then
+      printf '%s' "○"
+    elif (( pct < 38 )); then
+      printf '%s' "◔"
+    elif (( pct < 63 )); then
+      printf '%s' "◑"
+    elif (( pct < 88 )); then
+      printf '%s' "◕"
+    else
+      printf '%s' "●"
+    fi
+  else
+    printf '%s%%' "$pct"
+  fi
+}
+
 parse_epoch_from_iso() {
   local ts="$1"
   if [[ -z "$ts" || "$ts" == "null" ]]; then
@@ -87,7 +122,7 @@ trigger_refresh_if_needed() {
 }
 
 main() {
-  local label refresh_seconds cache_file show_week show_reset
+  local label refresh_seconds cache_file show_week show_reset percent_style
   local error_file now fetched_at_epoch stale_mark
   local five_hour_util seven_day_util five_reset_epoch reset_in reset_text
   local five_text seven_text segment
@@ -97,6 +132,7 @@ main() {
   cache_file="${CLAUDE_USAGE_CACHE_FILE:-$(get_tmux_option '@claude_usage_cache_file' "$HOME/.cache/tmux-claude-usage/usage.json")}"
   show_week="${CLAUDE_USAGE_SHOW_SEVEN_DAY:-$(get_tmux_option '@claude_usage_show_seven_day' 'on')}"
   show_reset="${CLAUDE_USAGE_SHOW_RESET:-$(get_tmux_option '@claude_usage_show_reset' 'on')}"
+  percent_style="${CLAUDE_USAGE_PERCENT_STYLE:-$(get_tmux_option '@claude_usage_percent_style' 'number')}"
   error_file="${cache_file}.error"
 
   trigger_refresh_if_needed "$cache_file" "$refresh_seconds"
@@ -111,8 +147,12 @@ main() {
   five_hour_util="$(jq -r '.five_hour_utilization // empty' "$cache_file" 2>/dev/null || true)"
   seven_day_util="$(jq -r '.seven_day_utilization // empty' "$cache_file" 2>/dev/null || true)"
 
-  five_text="$(format_percent "$five_hour_util")"
-  seven_text="$(format_percent "$seven_day_util")"
+  if [[ "$percent_style" != "ring" ]]; then
+    percent_style="number"
+  fi
+
+  five_text="$(format_percent_token "$five_hour_util" "$percent_style")"
+  seven_text="$(format_percent_token "$seven_day_util" "$percent_style")"
   stale_mark=""
 
   if (( now - fetched_at_epoch > refresh_seconds * 3 )); then
@@ -122,9 +162,9 @@ main() {
     stale_mark="!"
   fi
 
-  segment="${label} 5h:${five_text}%"
+  segment="${label} 5h:${five_text}"
   if [[ "$show_week" == "on" ]]; then
-    segment="${segment} 7d:${seven_text}%"
+    segment="${segment} 7d:${seven_text}"
   fi
 
   if [[ "$show_reset" == "on" ]]; then

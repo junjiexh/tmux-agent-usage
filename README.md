@@ -43,6 +43,7 @@ set -g @claude_usage_refresh_seconds '120'
 set -g @claude_usage_cache_file '~/.cache/tmux-claude-usage/usage.json'
 set -g @claude_usage_show_seven_day 'on'
 set -g @claude_usage_show_reset 'on'
+set -g @claude_usage_percent_style 'number' # number | ring
 set -g @claude_usage_auto_append_right 'on'
 set -g @claude_usage_auto_expand_right_length 'on'
 set -g @claude_usage_min_right_length '120'
