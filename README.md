@@ -21,7 +21,7 @@ If the cache is stale or last fetch failed, it appends `!`.
 In `~/.tmux.conf`:
 
 ```tmux
-set -g @plugin 'zhongjunjiexiansheng/tmux-agent-usage'
+set -g @plugin 'junjiexh/tmux-agent-usage'
 run '~/.tmux/plugins/tpm/tpm'
 ```
 
