@@ -41,6 +41,8 @@ format_percent_token() {
   fi
 
   if [[ "$style" == "ring" ]]; then
+    local level
+
     if (( pct < 0 )); then
       pct=0
     fi
@@ -48,17 +50,19 @@ format_percent_token() {
       pct=100
     fi
 
-    if (( pct < 13 )); then
-      printf '%s' "○"
-    elif (( pct < 38 )); then
-      printf '%s' "◔"
-    elif (( pct < 63 )); then
-      printf '%s' "◑"
-    elif (( pct < 88 )); then
-      printf '%s' "◕"
-    else
-      printf '%s' "●"
-    fi
+    # 8-step Nerd Font ring (mdi circle-slice), rounded from percent.
+    level=$(( (pct * 8 + 50) / 100 ))
+    case "$level" in
+      0) printf '%s' "○" ;;
+      1) printf '%s' "󰪞" ;;
+      2) printf '%s' "󰪟" ;;
+      3) printf '%s' "󰪠" ;;
+      4) printf '%s' "󰪡" ;;
+      5) printf '%s' "󰪢" ;;
+      6) printf '%s' "󰪣" ;;
+      7) printf '%s' "󰪤" ;;
+      *) printf '%s' "󰪥" ;;
+    esac
   else
     printf '%s%%' "$pct"
   fi
